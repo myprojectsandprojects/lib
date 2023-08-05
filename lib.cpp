@@ -173,13 +173,13 @@ uint8_t *i2b(uint64_t Value)
 //}
 
 //@ double values larger than INT_MAX cause an overflow
-double round(double D)
-{
-	if(D >= 0.0)
-		return (int)(D + 0.5);
-	else
-		return (int)(D - 0.5);
-}
+//double round(double D)
+//{
+//	if(D >= 0.0)
+//		return (int)(D + 0.5);
+//	else
+//		return (int)(D - 0.5);
+//}
 
 //// including Min and Max
 ////@ range

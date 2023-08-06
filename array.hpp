@@ -1,5 +1,7 @@
-#ifndef LIB_H
-#define LIB_H
+#ifndef ARRAY_H
+#define ARRAY_H
+
+#include <stdlib.h>
 
 #define INITIALLY_ALLOCATED 100
 

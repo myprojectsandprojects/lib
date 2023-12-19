@@ -43,6 +43,7 @@ void unpack_double_value(double Value, bool *Sign, int *Exponent, double *Mantis
 //int get_random_int(int Min, int Max);
 double random_num();
 int random_num(int RangeStart, int RangeEnd);
+bool find_bytes(uint8_t const *needle, int32_t needle_len, uint8_t const *haystack, int32_t haystack_len, int32_t *p_offset);
 
 
 #ifdef LIB_INCLUDE_IMPLEMENTATION
@@ -296,6 +297,32 @@ void unpack_double_value(double Value, bool *Sign, int *Exponent, double *Mantis
 		}
 		*Mantissa += 1;
 	}
+}
+
+bool find_bytes(uint8_t const *needle, int32_t needle_len, uint8_t const *haystack, int32_t haystack_len, int32_t *p_offset)
+{
+	for(int i = 0; i < haystack_len; ++i)
+	{
+		if(haystack[i] == needle[0])
+		{
+			for(int j = 1; j <= needle_len; ++j)
+			{
+				if(j == needle_len)
+				{
+					*p_offset = i;
+					// *ptr = &haystack[i];
+					return true;
+				}
+				if(needle[j] != haystack[i+j])
+				{
+					i += j;
+					break;
+				}
+			}
+		}
+	}
+
+	return false;
 }
 
 #endif

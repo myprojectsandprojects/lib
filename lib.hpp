@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h> //@ is this linux specific?
 //#include <assert.h>
 
 #include <stdint.h>

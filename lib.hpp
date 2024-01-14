@@ -44,7 +44,12 @@ void unpack_double_value(double Value, bool *Sign, int *Exponent, double *Mantis
 //int get_random_int(int Min, int Max);
 double random_num();
 int random_num(int RangeStart, int RangeEnd);
-bool find_bytes(uint8_t const *needle, int32_t needle_len, uint8_t const *haystack, int32_t haystack_len, int32_t *p_offset);
+// bool find_bytes(uint8_t const *needle, int32_t needle_len, uint8_t const *haystack, int32_t haystack_len, int32_t *p_offset);
+int32_t c_str_len(const char *c_str);
+int32_t forward_find(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len);
+int32_t backward_find(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len);
+int32_t forward_find_bm(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len);
+int32_t backward_find_bm(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len);
 
 
 #ifdef LIB_INCLUDE_IMPLEMENTATION
@@ -300,30 +305,136 @@ void unpack_double_value(double Value, bool *Sign, int *Exponent, double *Mantis
 	}
 }
 
-bool find_bytes(uint8_t const *needle, int32_t needle_len, uint8_t const *haystack, int32_t haystack_len, int32_t *p_offset)
-{
-	for(int i = 0; i < haystack_len; ++i)
-	{
-		if(haystack[i] == needle[0])
-		{
-			for(int j = 1; j <= needle_len; ++j)
-			{
-				if(j == needle_len)
-				{
-					*p_offset = i;
-					// *ptr = &haystack[i];
-					return true;
-				}
-				if(needle[j] != haystack[i+j])
-				{
-					i += j;
-					break;
-				}
+// bool find_bytes(uint8_t const *needle, int32_t needle_len, uint8_t const *haystack, int32_t haystack_len, int32_t *p_offset)
+// {
+// 	for(int i = 0; i < haystack_len; ++i)
+// 	{
+// 		if(haystack[i] == needle[0])
+// 		{
+// 			for(int j = 1; j <= needle_len; ++j)
+// 			{
+// 				if(j == needle_len)
+// 				{
+// 					*p_offset = i;
+// 					// *ptr = &haystack[i];
+// 					return true;
+// 				}
+// 				if(needle[j] != haystack[i+j])
+// 				{
+// 					i += j;
+// 					break;
+// 				}
+// 			}
+// 		}
+// 	}
+
+// 	return false;
+// }
+
+int32_t c_str_len(const char *c_str) {
+	assert(c_str != NULL);
+
+	int32_t count = 0;
+
+	while(c_str[count] != '\0') {
+		count += 1;
+	}
+
+	return count;
+}
+
+int32_t forward_find(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len) {
+	assert(needle_len > 0);
+
+	for(int i = 0; i <= (haystack_len - needle_len); ++i) {
+		for(int j = 0; needle[j] == haystack[i+j]; ++j) {
+			if(j+1 == needle_len) {
+				return i;
 			}
 		}
 	}
 
-	return false;
+	return -1;
+}
+
+int32_t backward_find(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len) {
+	assert(needle_len > 0);
+
+	for(int i = (haystack_len - needle_len); i > -1; --i) {
+		for(int j = 0; needle[j] == haystack[i+j]; ++j) {
+			if(j+1 == needle_len) {
+				return i;
+			}
+		}
+	}
+
+	return -1;
+}
+
+// Boyer-Moore
+int32_t forward_find_bm(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len) {
+	assert(needle_len > 0);
+
+	int values_table[256];
+	for(int i = 0; i < 256; ++i) {
+		values_table[i] = needle_len;
+	}
+	values_table[needle[needle_len-1]] = needle_len; //overwrite if same value appears also before
+	for(int i = 0; i < needle_len - 1; ++i) { //exclude last
+		values_table[needle[i]] = needle_len - 1 - i;
+	}
+	// values_table[needle[needle_len-1]] = needle_len; //@ but is this really correct?
+	// for(int i = 0; i < 256; ++i) {
+	// 	printf("%d (%c): %d\n", i, i, values_table[i]);
+	// }
+
+	int i = -1; i += needle_len;
+	while(i < haystack_len) {
+		// printf("%c\n", haystack[i]);
+
+		for(int j = 0; needle[needle_len-1-j] == haystack[i-j]; ++j) {
+			if(j+1 == needle_len) {
+				return i - (needle_len - 1);
+			}
+		}
+
+		i += values_table[haystack[i]];
+	}
+
+	return -1;
+}
+
+// Boyer-Moore
+int32_t backward_find_bm(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len) {
+	assert(needle_len > 0);
+
+	int values_table[256];
+	for(int i = 0; i < 256; ++i) {
+		values_table[i] = needle_len;
+	}
+	values_table[needle[0]] = needle_len; //overwrite if same value appears also after
+	for(int i = needle_len - 1; i > 0; --i) { //exclude first
+		values_table[needle[i]] = i;
+	}
+	// values_table[needle[needle_len-1]] = needle_len; //@ but is this really correct?
+	// for(int i = 0; i < 256; ++i) {
+	// 	printf("%d (%c): %d\n", i, i, values_table[i]);
+	// }
+
+	int i = haystack_len; i -= needle_len;
+	while(i > -1) {
+		// printf("%c\n", haystack[i]);
+
+		for(int j = 0; needle[j] == haystack[i+j]; ++j) {
+			if(j+1 == needle_len) {
+				return i;
+			}
+		}
+
+		i -= values_table[haystack[i]];
+	}
+
+	return -1;
 }
 
 #endif

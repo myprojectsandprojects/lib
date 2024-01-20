@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> //@ is this linux specific?
-//#include <assert.h>
+#include <assert.h>
 
 #include <stdint.h>
 typedef int8_t i8;
@@ -22,6 +22,9 @@ typedef uint64_t u64;
 //@ are these 32 and 64 bits for all architectures?
 typedef float r32;
 typedef double r64;
+
+uint64_t SafeSignedToUnsigned(int64_t Signed);
+int64_t SafeUnsignedToSigned(uint64_t Unsigned);
 
 bool ReadFile(const char *FileName, u8 **Contents, size_t *NumBytes);
 bool WriteFile(const char *FileName, u8 *Contents, size_t NumBytes);
@@ -53,6 +56,37 @@ int32_t backward_find_bm(const uint8_t *haystack, int32_t haystack_len, const ui
 
 
 #ifdef LIB_INCLUDE_IMPLEMENTATION
+
+uint64_t SafeSignedToUnsigned(int64_t Signed) {
+    assert(Signed > -1);
+    return Signed;
+}
+
+int64_t SafeUnsignedToSigned(uint64_t Unsigned) {
+	uint64_t FirstUnsignedToBecomeNegative = 0x8000000000000000;
+    assert(Unsigned < FirstUnsignedToBecomeNegative);
+    return Unsigned;
+}
+
+// bool IsGreater(int64_t Signed, uint64_t Unsigned) {}
+// bool IsLess(int64_t Signed, uint64_t Unsigned) {}
+// bool IsEqual(int64_t Signed, uint64_t Unsigned) {}
+
+// ? CompareSignedAndUnsigned(int64_t Signed, uint64_t Unsigned) {
+// 	if(Unsigned > 0x7fffffffffffffff) {
+// 		// 'Unsigned' is greater
+// 	} else if(Signed < 0) {
+// 		// 'Unsigned' is greater
+// 	} else {
+// 		if(Signed > Unsigned) {
+// 			// 'Signed' is greater
+// 		} else if(Signed < Unsigned) {
+// 			// 'Unsigned' is greater
+// 		} else {
+// 			// equal
+// 		}
+// 	}
+// }
 
 bool ReadFile(const char *FileName, u8 **Contents, size_t *ContentsNumBytes)
 {

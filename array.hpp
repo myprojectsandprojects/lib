@@ -3,7 +3,8 @@
 
 #include <stdlib.h>
 
-#define INITIALLY_ALLOCATED 100
+#define INITIALLY_ALLOCATED 1
+// #define INITIALLY_ALLOCATED 100
 
 template <typename t>
 struct array

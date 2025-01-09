@@ -7,17 +7,18 @@ void ArrayInit(array<t> *A)
 }
 
 template <typename t>
-void ArrayFree(array<t> *A)
-{
-	free(A->Data);
-}
-
-template <typename t>
 array<t> *ArrayNew()
 {
 	array<t> *Array = (array<t> *) malloc(sizeof(array<t>));
 	ArrayInit(Array);
 	return Array;
+}
+
+template <typename t>
+void ArrayFree(array<t> *A)
+{
+	free(A->Data);
+//	free(A); //@?
 }
 
 template <typename t>
@@ -43,7 +44,7 @@ void ArrayAdd(array<t> *Array, t Element)
 //@ wouldnt this be less copying? especially when storing a struct with bunch of data members?
 // based on my very quick and sloppy test, this is was maybe slightly faster than above version, but with -O1, the difference, if it is there, is very small. maybe its because the compiler manages to optimize away the shortcomings of the above version, who knows... But it was almost twice as fast to make a struct locally and copy/store the whole struct rather than to malloc() and store a pointer. I only measured how fast it was to store 1 million structs in an array, not how fast it was to access them.
 template <typename t>
-t *ArrayAdd(array<t> *Array)
+t *ArrayAppend(array<t> *Array)
 {
 //	assert(array->count <= array->allocated);
 	if (Array->Count == Array->Allocated)
@@ -108,14 +109,24 @@ void ArrayAddSlow(array<t> *a, t e[], int n)
 }
 
 template <typename t>
-void ArrayRemove(array<t> *Array, int i)
+void ArrayRemove(array<t> *Array, int nth)
 {
-	assert(i >= 0 && i < Array->Count);
-	for(; i < Array->Count-1; ++i)
+	assert(nth >= 0 && nth < Array->Count);
+	for(; nth < Array->Count-1; ++nth)
 	{
-		Array->Data[i] = Array->Data[i+1];
+		Array->Data[nth] = Array->Data[nth+1];
 	}
 	Array->Count -= 1;
 }
 
+/* Is this possible to do: */
+//template <typename t>
+//void ArrayRemoveAll(array<t> *Array)
+//{
+//	for(int i = 0; i < Array->Count; ++i) {
+//		// remove Array->Data[i]
+//	}
+//
+//	Array->Count = 0;
+//}
 

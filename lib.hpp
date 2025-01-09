@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> //@ is this linux specific?
+#include <sys/time.h> //@?
 #include <assert.h>
 
 #include <stdint.h>
@@ -26,8 +27,8 @@ typedef double r64;
 // Determines the length of an array at compile time.
 #define COUNT(a) (sizeof(a) / sizeof(a[0]))
 
-#define MIN(a, b) (a) < (b) ? (a) : (b)
-#define MAX(a, b) (a) > (b) ? (a) : (b)
+#define LIB_MIN(a, b) (a) < (b) ? (a) : (b)
+#define LIB_MAX(a, b) (a) > (b) ? (a) : (b)
 
 // Using this on a float or a double before casting it to an integer yields a more accurate result.
 #define CAST_ROUND(n) ((n) + (((n) > 0) ? 0.5 : -0.5))
@@ -56,7 +57,32 @@ namespace Lib
 	int32_t forward_find_bm(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len);
 	int32_t backward_find_bm(const uint8_t *haystack, int32_t haystack_len, const uint8_t *needle, int32_t needle_len);
 
+	const char *basename_get_extension(const char *basename);
+	const char *filepath_get_basename(const char *filepath);
+
+	double get_time_secs();
+	long get_time_us();
+
 	void ZeroMemory(uint8_t * Memory, int64_t NumBytes);
+
+	//@ todo (things that could be improved probably):
+	// dynamically grow at some point (when?)
+	// improved hash
+	// improved probing
+	// right now we just store strings so that someone can check if we have a particular string or not, but we might want to store other things as well (?)
+	
+	#define HASH_TABLE_SIZE 512
+	
+	struct HashTable
+	{
+		const char *data[HASH_TABLE_SIZE];
+		int num_occupied_slots;
+	};
+
+	void hash_table_init(HashTable *table);
+	void hash_table_store(HashTable *table, const char *str);
+	bool hash_table_has(HashTable *table, const char *str);
+	void hash_table_print(HashTable *table);
 }
 
 
@@ -483,6 +509,140 @@ namespace Lib
 		for(int i = 0; i < NumBytes; ++i)
 		{
 			Memory[i] = 0;
+		}
+	}
+
+	const char *filepath_get_basename(const char *filepath){
+		assert(filepath);
+
+		int length = strlen(filepath);
+		assert(length > 0); // ?
+		const char *p = filepath + length - 1;
+		for(; p > filepath; --p){
+			if(*p == '/'){
+				p += 1;
+				break;
+			}
+		}
+
+		return p;
+	}
+
+	const char *basename_get_extension(const char *basename){
+		assert(basename);
+
+		int length = strlen(basename);
+		assert(length > 0); // ?
+		const char *p = basename + length - 1;
+		for(; p > basename; --p){
+			if(*p == '.'){
+				p += 1;
+				break;
+			}
+		}
+
+		if(p == basename){ // ".file" and "file" do not have basenames
+			return "";
+		}
+
+		return p;
+	}
+
+	// nanosecond accuracy
+	double get_time_secs()
+	{
+		struct timespec t;
+		clock_gettime(CLOCK_REALTIME, &t);
+//		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &t);
+		return (t.tv_sec + (t.tv_nsec / 1000000000.0));
+	}
+
+	long get_time_us()
+	{
+		timeval time;
+		gettimeofday(&time, NULL);
+		return time.tv_sec * 1000000 + time.tv_usec;
+	}
+
+	void hash_table_init(HashTable *table)
+	{
+		for (int i = 0; i < HASH_TABLE_SIZE; ++i)
+		{
+			table->data[i] = 0;
+		}
+		table->num_occupied_slots = 0;
+	}
+
+	void hash_table_store(HashTable *table, const char *str)
+	{
+		unsigned int hash = 0;
+		for (const char *p = str; *p; ++p)
+		{
+			hash += *p;
+		}
+		unsigned int index = hash % HASH_TABLE_SIZE;
+	
+		// we want to keep 1 empty slot, because otherwise when the table is full the lookup code will loop forever.
+		assert(table->num_occupied_slots < HASH_TABLE_SIZE-1);
+	
+		while (table->data[index])
+		{
+			if (strcmp(table->data[index], str) == 0)
+			{
+				// string already there
+				return;
+			}
+			index += 1;
+			index %= HASH_TABLE_SIZE;
+		}
+		table->data[index] = str;
+		table->num_occupied_slots += 1;
+	}
+
+	bool hash_table_has(HashTable *table, const char *str)
+	{
+		unsigned int hash = 0;
+		for (const char *p = str; *p; ++p)
+		{
+			hash += *p;
+		}
+		unsigned int index = hash % HASH_TABLE_SIZE;
+	
+	//	int num_comparsions = 0;
+		bool found = false;
+		while (table->data[index])
+		{
+	//		num_comparsions += 1;
+			if (strcmp(table->data[index], str) == 0)
+			{
+				found = true;
+				break;
+			}
+			index += 1;
+			index %= HASH_TABLE_SIZE;
+		}
+	//	printf("num_comparsions for \"%s\": %d\n", str, num_comparsions);
+		return found;
+	}
+
+	void hash_table_print(HashTable *table)
+	{
+		for (int i = 0; i < HASH_TABLE_SIZE; ++i)
+		{
+			if (table->data[i])
+			{
+				unsigned int hash = 0;
+				for (const char *p = table->data[i]; *p; ++p)
+				{
+					hash += *p;
+				}
+				unsigned int index = hash % HASH_TABLE_SIZE;
+				printf("%d: %s (%d)\n", i, table->data[i], index);
+			}
+			else
+			{
+				printf("%d: -\n", i);
+			}
 		}
 	}
 }

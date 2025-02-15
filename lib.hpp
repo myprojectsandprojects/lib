@@ -84,6 +84,16 @@ namespace Lib
 	void hash_table_store(HashTable *table, const char *str);
 	bool hash_table_has(HashTable *table, const char *str);
 	void hash_table_print(HashTable *table);
+
+
+//	struct stringSlice
+//	{
+//		int Length;
+//		const char *Data;
+//	};
+//
+//	stringSlice make_stringSlice(const char *Original);
+//	void print_stringSlice(stringSlice Slice);
 }
 
 
@@ -646,6 +656,29 @@ namespace Lib
 			}
 		}
 	}
+
+//stringSlice make_stringSlice(const char *Original)
+//{
+//	stringSlice Slice;
+//	Slice.Data = Original;
+//	Slice.Length = strlen(Original);
+//	return Slice;
+//}
+//
+//void print_stringSlice(stringSlice Slice)
+//{
+//	const int MAX_C_STRING = 1024;
+//	char c_string[MAX_C_STRING];
+//
+//	assert(Slice.Length < MAX_C_STRING-1);
+//	for(int i = 0; i < Slice.Length; ++i)
+//	{
+//		c_string[i] = Slice.Data[i];
+//	}
+//	c_string[Slice.Length] = '\0';
+//
+//	printf("%s", c_string);
+//}
 }
 
 #endif
